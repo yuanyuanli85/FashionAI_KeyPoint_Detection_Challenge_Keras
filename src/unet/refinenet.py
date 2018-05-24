@@ -5,20 +5,6 @@ from keras import backend as K
 from keras.applications.resnet50 import ResNet50
 
 IMAGE_ORDERING = 'channels_last'
-VGG_Weights_path = "../../data/vgg16_weights_tf_dim_ordering_tf_kernels.h5"
-
-
-def VggRefineNet(n_classes, inputHeight, inputWidth):
-    model = build_network(inputHeight, inputWidth, n_classes)
-    return model
-
-def VggRefineNetDilated(n_classes, inputHeight, inputWidth):
-    model = build_network(inputHeight, inputWidth, n_classes, dilated=True)
-    return model
-
-def Res50RefineNetDilated(n_classes, inputHeight, inputWidth):
-    model = build_network_resnet50(inputHeight, inputWidth, n_classes, dilated=True)
-    return model
 
 def Res101RefineNetDilated(n_classes, inputHeight, inputWidth):
     model = build_network_resnet101(inputHeight, inputWidth, n_classes, dilated=True)
@@ -29,59 +15,8 @@ def Res101RefineNetStacked(n_classes, inputHeight, inputWidth, nStackNum):
     return model
 
 def euclidean_loss(x, y):
-	return K.sqrt(K.sum(K.square(x - y)))
+    return K.sqrt(K.sum(K.square(x - y)))
 
-def load_backbone_vggnet(inputHeight, inputWidth):
-    assert inputHeight % 32 == 0
-    assert inputWidth % 32 == 0
-    assert K.image_data_format() == 'channels_last'
-
-    img_input = Input(shape=(inputHeight, inputWidth, 3))
-
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1', data_format=IMAGE_ORDERING)(
-        img_input)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv2', data_format=IMAGE_ORDERING)(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool', data_format=IMAGE_ORDERING)(x)
-    f1 = x
-    # Block 2
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv1', data_format=IMAGE_ORDERING)(x)
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block2_conv2', data_format=IMAGE_ORDERING)(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool', data_format=IMAGE_ORDERING)(x)
-    f2 = x
-
-    # Block 3
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv1', data_format=IMAGE_ORDERING)(x)
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv2', data_format=IMAGE_ORDERING)(x)
-    x = Conv2D(256, (3, 3), activation='relu', padding='same', name='block3_conv3', data_format=IMAGE_ORDERING)(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool', data_format=IMAGE_ORDERING)(x)
-    f3 = x
-
-    # Block 4
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv1', data_format=IMAGE_ORDERING)(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv2', data_format=IMAGE_ORDERING)(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block4_conv3', data_format=IMAGE_ORDERING)(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool', data_format=IMAGE_ORDERING)(x)
-    f4 = x
-
-    # Block 5
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv1', data_format=IMAGE_ORDERING)(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv2', data_format=IMAGE_ORDERING)(x)
-    x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv3', data_format=IMAGE_ORDERING)(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool', data_format=IMAGE_ORDERING)(x)
-    f5 = x
-
-    ## Modify the name of layers to avoid mismatched shape of dense layer
-    x = Flatten(name='mflatten')(x)
-    x = Dense(4096, activation='relu', name='mfc1')(x)
-    x = Dense(4096, activation='relu', name='mfc2')(x)
-    x = Dense(1000, activation='softmax', name='mpredictions')(x)
-
-    ## Set by_name=True to avoid loading non-existing layers
-    vgg = Model(img_input, x)
-    vgg.load_weights(VGG_Weights_path, by_name=True)
-
-    # low level feature  2x, 4x, 8x and 16x
-    return (img_input, f1, f2, f3, f4)
 
 def create_global_net(lowlevelFeatures, n_classes):
     lf2x, lf4x, lf8x, lf16x = lowlevelFeatures
@@ -261,59 +196,6 @@ def create_global_net_dilated(lowlevelFeatures, n_classes):
     return (fup8x, eadd4x, eadd2x)
 
 
-def build_network(inputHeight, inputWidth, n_classes, frozenlayers=True, dilated=False):
-    input,  lf2x, lf4x, lf8x, lf16x   = load_backbone_vggnet(inputHeight, inputWidth)
-
-    # global net 8x, 4x, and 2x
-    if dilated:
-        g8x, g4x, g2x = create_global_net_dilated((lf2x, lf4x, lf8x, lf16x), n_classes)
-    else:
-        g8x, g4x, g2x = create_global_net((lf2x, lf4x, lf8x, lf16x), n_classes)
-
-    # refine net, only 2x as output
-    refine2x = create_refine_net_bottleneck((g8x, g4x, g2x), n_classes)
-
-    model = Model(inputs=input, outputs=[g2x, refine2x])
-
-    if frozenlayers:
-        # freze front-end layers comes from vgg16
-        vggLayerNames = ['block1_conv1', 'block1_conv2', 'block1_pool',
-                         'block2_conv1', 'block2_conv2', 'block2_pool',
-                         'block3_conv1', 'block3_conv2', 'block3_conv3', 'block3_pool',
-                         #'block4_conv1', 'block4_conv2', 'block4_conv3', 'block4_pool'
-                         ]
-
-        for layer in model.layers:
-            if layer.name in vggLayerNames:
-                layer.trainable = False
-
-    adam = Adam(lr=1e-4)
-    model.compile(optimizer=adam, loss=euclidean_loss, metrics=["accuracy"])
-
-    return model
-
-
-def build_network_resnet50(inputHeight, inputWidth, n_classes, frozenlayers=True, dilated=False):
-    input, lf2x, lf4x, lf8x, lf16x = load_backbone_res50net(inputHeight, inputWidth)
-
-    # global net 8x, 4x, and 2x
-    if dilated:
-        g8x, g4x, g2x = create_global_net_dilated((lf2x, lf4x, lf8x, lf16x), n_classes)
-    else:
-        g8x, g4x, g2x = create_global_net((lf2x, lf4x, lf8x, lf16x), n_classes)
-
-    # refine net, only 2x as output
-    refine2x = create_refine_net_bottleneck((g8x, g4x, g2x), n_classes)
-
-    model = Model(inputs=input, outputs=[g2x, refine2x])
-
-
-    adam = Adam(lr=1e-4)
-    model.compile(optimizer=adam, loss=euclidean_loss, metrics=["accuracy"])
-
-    return model
-
-
 def build_network_resnet101(inputHeight, inputWidth, n_classes, frozenlayers=True, dilated=False):
     input, lf2x, lf4x, lf8x, lf16x = load_backbone_res101net(inputHeight, inputWidth)
 
@@ -354,21 +236,6 @@ def build_network_resnet101_stack(inputHeight, inputWidth, n_classes, nStack):
     model.compile(optimizer=adam, loss=euclidean_loss, metrics=["accuracy"])
     return model
 
-
-def load_backbone_res50net(inputHeight, inputWidth):
-    xresnet = ResNet50(input_shape=(512, 512, 3), include_top=False,
-                       weights="../../data/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5")
-
-
-    lf16x = xresnet.get_layer('activation_40').output
-    lf8x = xresnet.get_layer('activation_22').output
-    lf4x = xresnet.get_layer('activation_10').output
-    lf2x = xresnet.get_layer('activation_1').output
-
-    # add one padding for lf4x whose shape is 127x127
-    lf4xp = ZeroPadding2D(padding=((0, 1), (0, 1)))(lf4x)
-
-    return (xresnet.input, lf2x, lf4xp, lf8x, lf16x )
 
 def load_backbone_res101net(inputHeight, inputWidth):
     from resnet101 import ResNet101

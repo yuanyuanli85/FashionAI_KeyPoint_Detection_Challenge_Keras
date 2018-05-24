@@ -57,7 +57,7 @@ def pad_image(cvmat, kpAnno, targetWidth, targetHeight):
         # add pad to width
         outmat[:, 0:srcWidth, :] = cvmat
         outkpAnno = kpAnno
-    elif targetHeight != targetHeight and targetWidth == targetWidth:
+    elif targetHeight != srcHeight and targetWidth == srcWidth:
         # add padding to height
         outmat[0:srcHeight, :, :] = cvmat
         outkpAnno = kpAnno
@@ -87,11 +87,11 @@ def pad_image_inference(cvmat, targetWidth, targetHeight):
     if targetHeight == srcHeight and targetWidth == srcWidth:
         outmat = cvmat
         scale = 1.0
-    elif targetWidth != srcWidth and targetHeight == srcHeight:
+    elif targetWidth > srcWidth and targetHeight == srcHeight:
         # add pad to width
         outmat[:, 0:srcWidth, :] = cvmat
         scale = 1.0
-    elif targetHeight != targetHeight and targetWidth == targetWidth:
+    elif targetHeight > srcHeight and targetWidth == srcWidth:
         # add padding to height
         outmat[0:srcHeight, :, :] = cvmat
         scale = 1.0
@@ -130,15 +130,35 @@ def rotate_image(cvmat, kpAnnLst, rotateAngle):
     return (outMat, nKpLst)
 
 
+def rotate_image_with_invrmat(cvmat, rotateAngle):
+
+    assert (cvmat.dtype == np.uint8) , " only support normalize np.uint  in rotate_image_with_invrmat'"
+
+    ##Make sure cvmat is square?
+    height, width, channel = cvmat.shape
+
+    center = ( width//2, height//2)
+    rotateMatrix = cv2.getRotationMatrix2D(center, rotateAngle, 1.0)
+
+    cos, sin = np.abs(rotateMatrix[0,0]), np.abs(rotateMatrix[0, 1])
+    newH = int((height*sin)+(width*cos))
+    newW = int((height*cos)+(width*sin))
+
+    rotateMatrix[0,2] += (newW/2) - center[0] #x
+    rotateMatrix[1,2] += (newH/2) - center[1] #y
+
+    # rotate image
+    outMat = cv2.warpAffine(cvmat, rotateMatrix, (newH, newW), borderValue=(128, 128, 128))
+
+    # generate inv rotate matrix
+    invRotateMatrix = cv2.invertAffineTransform(rotateMatrix)
+
+    return (outMat, invRotateMatrix, (width, height))
+
 def rotate_mask(mask, rotateAngle):
 
     outmask = rotate_image_float(mask, rotateAngle)
 
-    # background at last channel
-    max_mask = np.zeros((outmask.shape[0], outmask.shape[1]), dtype=np.float)
-    for i in range(mask.shape[-1] - 1):
-        max_mask = np.maximum(max_mask, outmask[:, :, i])
-    outmask[:, :, -1] = 1 - max_mask
     return outmask
 
 def rotate_image_float(cvmat, rotateAngle, borderValue=(0.0, 0.0, 0.0)):
@@ -181,13 +201,16 @@ def crop_image(cvmat, kpAnnLst, lowLimitRatio, upLimitRatio):
     # apply offset for keypoints
     nKpLst = list()
     for _kp in kpAnnLst:
-        _newkp = KpAnno.applyOffset(_kp, (top_x, top_y))
-        if _newkp.x <=0 or _newkp.y <=0:
-            # negative location, return original image
-            return cvmat, kpAnnLst
-        if _newkp.x >= cropWidth or _newkp.y >= cropHeight:
-            # keypoints are cropped out
-            return cvmat, kpAnnLst
+        if _kp.visibility == -1:
+            _newkp = _kp
+        else:
+            _newkp = KpAnno.applyOffset(_kp, (top_x, top_y))
+            if _newkp.x <=0 or _newkp.y <=0:
+                # negative location, return original image
+                return cvmat, kpAnnLst
+            if _newkp.x >= cropWidth or _newkp.y >= cropHeight:
+                # keypoints are cropped out
+                return cvmat, kpAnnLst
         nKpLst.append(_newkp)
 
     return cvmat[top_y:top_y+cropHeight,  top_x:top_x+cropWidth], nKpLst

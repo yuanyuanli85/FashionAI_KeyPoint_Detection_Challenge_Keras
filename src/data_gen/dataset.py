@@ -34,6 +34,18 @@ OUTWEAR_PART_FLIP_KEYS = ['neckline_right', 'neckline_left', 'shoulder_right', '
            'armpit_right', 'armpit_left', 'waistline_right', 'waistline_left', 'cuff_right_in',
            'cuff_right_out', 'cuff_left_in', 'cuff_left_out', 'top_hem_right', 'top_hem_left']
 
+ALL_PART_KEYS = ['neckline_left', 'neckline_right', 'center_front', 'shoulder_left', 'shoulder_right',
+               'armpit_left', 'armpit_right', 'waistline_left', 'waistline_right', 'cuff_left_in', 'cuff_left_out',
+               'cuff_right_in', 'cuff_right_out', 'top_hem_left', 'top_hem_right', 'waistband_left', 'waistband_right',
+               'hemline_left', 'hemline_right', 'crotch', 'bottom_left_in', 'bottom_left_out',
+               'bottom_right_in', 'bottom_right_out']
+
+ALL_PART_FLIP_KEYS = [  'neckline_right', 'neckline_left', 'center_front', 'shoulder_right', 'shoulder_left',
+                        'armpit_right', 'armpit_left',   'waistline_right', 'waistline_left', 'cuff_right_in', 'cuff_right_out',
+                        'cuff_left_in', 'cuff_left_out', 'top_hem_right', 'top_hem_left',  'waistband_right','waistband_left',
+                        'hemline_right', 'hemline_left',  'crotch',  'bottom_right_in', 'bottom_right_out',
+                        'bottom_left_in', 'bottom_left_out']
+
 def getFlipKeys(category):
     if category == 'skirt':
         keys, mapkeys = SKIRT_PART_KEYS, SKIRT_PART_FLIP_KEYS
@@ -45,6 +57,8 @@ def getFlipKeys(category):
         keys, mapkeys = BLOUSE_PART_KEYS, BLOUSE_PART_FLIP_KEYS
     elif category == 'outwear':
         keys, mapkeys = OUTWEAR_PART_KEYS, OUTWEAR_PART_FLIP_KEYS
+    elif category == 'all':
+        keys, mapkeys = ALL_PART_KEYS, ALL_PART_FLIP_KEYS
     else:
         assert (0), category + " not supported"
 
@@ -111,6 +125,7 @@ def fill_dataframe(kplst, category, dfrow):
         outstr = str(int(kpann.x))+"_"+str(int(kpann.y))+"_"+str(1)
         dfrow[_key] = outstr
 
+
 def get_kp_index_from_allkeys(kpname):
     ALL_KP_KEYS = ['neckline_left', 'neckline_right', 'center_front', 'shoulder_left', 'shoulder_right',
                    'armpit_left', 'armpit_right', 'waistline_left', 'waistline_right', 'cuff_left_in', 'cuff_left_out',
@@ -119,7 +134,8 @@ def get_kp_index_from_allkeys(kpname):
 
     return ALL_KP_KEYS.index(kpname)
 
-def generate_input_mask(image_category, shape):
+
+def generate_input_mask(image_category, shape, nobgFlag=True):
     import numpy as np
     # 0.0 for invalid key points for each category
     # 1.0 for valid key points for each category
@@ -131,5 +147,7 @@ def generate_input_mask(image_category, shape):
         mask[:, :, index] = 1.0
 
     # for last channel, background
-    mask[:, :, -1] = 1.0
+    if nobgFlag:     mask[:, :, -1] = 0.0
+    else:   mask[:, :, -1] = 1.0
+
     return mask

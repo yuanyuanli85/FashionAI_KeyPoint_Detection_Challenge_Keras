@@ -1,3 +1,7 @@
+import sys
+sys.path.insert(0, "../data_gen/")
+sys.path.insert(0, "../unet/")
+
 import argparse
 import os
 from fashion_net import FashionNet
@@ -37,10 +41,10 @@ if __name__ == "__main__":
     k.tensorflow_backend.set_session(tf.Session(config=config))
 
     if not args.resume :
-        xnet = FashionNet(512, 512, getKpNum(args.category) + 1)
+        xnet = FashionNet(512, 512, getKpNum(args.category))
         xnet.build_model(modelName=args.network, show=True)
         xnet.train(args.category, epochs=args.epochs, batchSize=args.batchSize, lrschedule=args.lrdecay)
     else:
-        xnet = FashionNet(512, 512, getKpNum(args.category) + 1)
+        xnet = FashionNet(512, 512, getKpNum(args.category))
         xnet.resume_train(args.category, args.resumeModel, args.network, args.initEpoch,
                           epochs=args.epochs, batchSize=args.batchSize)

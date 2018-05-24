@@ -34,10 +34,18 @@ class NormalizedErrorCallBack(keras.callbacks.Callback):
         xEval.init_from_model(self.model)
 
         start = time()
-        neScore = xEval.eval(self.multiOut)
+        neScore, categoryDict = xEval.eval(self.multiOut, details=True)
         end = time()
         print "Evaluation Done", str(neScore), " cost ", end - start, " seconds!"
 
+        for key in categoryDict.keys():
+            scores = categoryDict[key]
+            print key, ' score ', sum(scores)/len(scores)
+
         with open(self.valLog , 'a+') as xfile:
             xfile.write(modelName + ", Socre "+ str(neScore)+"\n")
+            for key in categoryDict.keys():
+                scores = categoryDict[key]
+                xfile.write(key + ": " + str(sum(scores)/len(scores)) + "\n")
+
         xfile.close()
