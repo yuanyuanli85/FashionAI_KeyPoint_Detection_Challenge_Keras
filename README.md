@@ -3,7 +3,8 @@
 - Author: VictorLi, yuanyuan.li85@gmail.com
 - Code for  FashionAI Global Challenge—Key Points Detection of Apparel
 [2018 TianChi](https://tianchi.aliyun.com/competition/introduction.htm?spm=5176.100068.5678.1.4ccc289bCzDJXu&raceId=231648&_lang=en_US)
-- Rank 45/2322 at 1st round competition
+- Rank 45/2322 at 1st round competition, score 0.61
+- Rank 42 at 2nd round competition, score 0.464
 
 ## Basic idea
 - The key idea comes from paper [Cascaded Pyramid Network for Multi-Person Pose Estimation](https://arxiv.org/abs/1711.07319). We have a 2 stage network called global net and refine net who are U-net like. The network was trained to detect the heatmap of cloth's key points. The backbone network used here is resnet101.  
