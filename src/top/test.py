@@ -11,7 +11,31 @@ import pandas as pd
 from evaluation import Evaluation
 import pickle
 import numpy as np
-from search_models import get_best_single_model
+
+
+def get_best_single_model(valfile):
+    '''
+    :param valfile: the log file with validation score for each snapshot
+    :return: model file and score
+    '''
+
+    def get_key(item):
+        return item[1]
+
+    with open(valfile) as xval:
+        lines = xval.readlines()
+
+    xlist = list()
+    for linenum, xline in enumerate(lines):
+        if 'hdf5' in xline and 'Socre' in xline:
+            modelname = xline.strip().split(',')[0]
+            overallscore = xline.strip().split(',')[1]
+            xlist.append((modelname, overallscore))
+
+    bestmodel = sorted(xlist, key=get_key)[0]
+
+    return bestmodel
+
 
 def fill_dataframe(kplst, keys, dfrow, image_category):
     # fill category
