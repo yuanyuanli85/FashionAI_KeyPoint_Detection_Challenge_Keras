@@ -36,7 +36,7 @@ Note: all the models here use channel_last dim order.
 `python train.py --category all --epochs 30 --network v11 --batchSize 3 --gpuID 2`  
 The trained model and log will be put under `trained_models/all/xxxx`, i.e `trained_models/all/2018_05_23_15_18_07/`  
 The evaluation  will run for each epoch and details saved to `val.log`
-- Resume training from a specific model.   
+- Resume training from a specific model.  
 `python train.py --gpuID 2 --category all --epochs 30 --network v11 --batchSize 3 --resume True --resumeModel /path/to/model/start/with --initEpoch 6`
 
 ## How to test and generate submission
@@ -45,4 +45,8 @@ Below command search the best score from `modelpath` and use that to generate su
 `python test.py --gpuID 2 --modelpath ../../trained_models/all/xxx --outpath ../../submission/2018_04_19/ --augment True`  
 The submission will be saved as `submission.csv`
 
-## How to run demo [WIP]
+## How to run demo
+- Download the pre trained weights from [BaiduDisk](https://pan.baidu.com/s/1t7fB5wnRfW1Vny0gw7xUDQ), password `1ae2`. Save it somewhere, i.e `trained_models/all/fashion_ai_keypoint_weights_epoch28.hdf5`
+- Or use your own trained model.
+- Run demo and the cloth with keypoints marked will be displayed.   
+`python demo.py --gpuID 2 --modelfile ../../trained_models/all/fashion_ai_keypoint_weights_epoch28.hdf5`
