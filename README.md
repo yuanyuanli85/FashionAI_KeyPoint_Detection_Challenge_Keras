@@ -63,3 +63,6 @@ The submission will be saved as `submission.csv`
 - Or use your own trained model.
 - Run demo and the cloth with keypoints marked will be displayed.   
 `python demo.py --gpuID 2 --modelfile ../../trained_models/all/fashion_ai_keypoint_weights_epoch28.hdf5`
+
+## Reference
+- Resnet 101 Keras : https://github.com/statech/resnet
