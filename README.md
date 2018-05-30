@@ -6,6 +6,19 @@
 - Rank 45/2322 at 1st round competition, score 0.61
 - Rank 42 at 2nd round competition, score 0.464
 
+## Images with detected keypoints
+### Dress
+![Dress](./images/dress.jpg)
+### Blouse
+![Blouse](./images/blouse.jpg)
+### Outwear
+![Outwear](./images/outwear.jpg)
+### Skirt
+![Skirt](./images/skirt.jpg)
+### Trousers
+![Trousers](./images/trousers.jpg)
+
+
 ## Basic idea
 - The key idea comes from paper [Cascaded Pyramid Network for Multi-Person Pose Estimation](https://arxiv.org/abs/1711.07319). We have a 2 stage network called global net and refine net who are U-net like. The network was trained to detect the heatmap of cloth's key points. The backbone network used here is resnet101.  
 - To overcome the negative impact from different category, `input_mask` was introduced to zero the invalid keypoints. For example, skirt has 4 valid keypoints: `waistband_left`, `waistband_right`, `hemline_left` and `hemline_right`. In `input_mask`, only those valid masks are 1.0 , while other 20 masks are set as zero.
