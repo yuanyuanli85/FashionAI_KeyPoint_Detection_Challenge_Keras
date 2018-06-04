@@ -4,7 +4,7 @@
 - Code for  FashionAI Global Challenge—Key Points Detection of Apparel
 [2018 TianChi](https://tianchi.aliyun.com/competition/introduction.htm?spm=5176.100068.5678.1.4ccc289bCzDJXu&raceId=231648&_lang=en_US)
 - Rank 45/2322 at 1st round competition, score 0.61
-- Rank 42 at 2nd round competition, score 0.464
+- Rank 46 at 2nd round competition, score 0.477
 
 ## Images with detected keypoints
 ### Dress
