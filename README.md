@@ -34,8 +34,8 @@
 - `data`: folder to store training and testing images and annotations
 - `trained_models`: folder to store trained models and logs
 - `submission`: folder to store generated submission for evaluation.
-- `src`: folder to put all of source code.   
-`src/data_gen`: code for data generator including data augmentation and pre-process   
+- `src`: folder to put all of source code.  
+`src/data_gen`: code for data generator including data augmentation and pre-process  
 `src/eval`: code for evaluation, including inference and post-processing.  
 `src/unet`: code for cnn model definition, including train, fine-tune, loss, optimizer definition.  
 `src/top`:top level code for train, test and demo.   
